@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { DrawLayer } from '../../store/draw/draw.types';
 import styles from './Layers.module.css';
@@ -10,54 +10,53 @@ import {
   selectTopLayers,
 } from '../../store/draw';
 
-export type LayersProps = {
+type LayersProps = {
   mode: 'bottom' | 'top';
+  width: number;
+  height: number;
 };
 
 export function Layers(props: LayersProps) {
-  const [ctx, setCtx] = useState(null as CanvasRenderingContext2D | null);
   const layersBottom = useSelector(selectBottomLayers) as DrawLayer[];
   const layersTop = useSelector(selectTopLayers) as DrawLayer[];
 
-  let layers: DrawLayer[] = [];
-  switch (props.mode) {
-    case 'bottom':
-      layers = layersBottom;
-      break;
-    case 'top':
-      layers = layersTop;
-      break;
-  }
-  const canvasNodeRef = useRef(null as HTMLCanvasElement | null);
-  const canvasRef = useCallback((node: HTMLCanvasElement) => {
-    if (node !== null) {
-      const ctx = node.getContext('2d');
-      setCtx(ctx);
-      const {width, height} = node.getBoundingClientRect();
-      node.width = width;
-      node.height = height;
-    }
-    canvasNodeRef.current = node;
-  }, []);
+  const layers: DrawLayer[] = useMemo(()=>{
+    return props.mode === 'bottom'
+      ? layersBottom
+      : layersTop;
+  }, [layersBottom, layersTop, props.mode]);
 
-  if (ctx) {
-    ctx.clearRect(0, 0, canvasNodeRef.current?.width || 0, canvasNodeRef.current?.height || 0);
-    layers.forEach((layer) => {
-      switch(layer.type){
-        case 'circle':
-          circle.render(layer, ctx);
-          break;
-        case 'rect':
-          rect.render(layer, ctx);
-          break;
-        case 'line':
-          line.render(layer, ctx);
-          break;
+  const canvasNodeRef = useRef(null as HTMLCanvasElement | null);
+
+  useEffect(() => {
+    const node = canvasNodeRef.current;
+    const ctx = node?.getContext('2d');
+    if (ctx && node) {
+      if (node.width !== props.width || node.height !== props.height) {
+        node.width = props.width;
+        node.height = props.height;
       }
-    });
-  }
+      ctx.clearRect(0, 0, node.width || 0, node.height || 0);
+      layers.forEach((layer) => {
+        switch (layer.type) {
+          case 'circle':
+            circle.render(layer, ctx);
+            break;
+          case 'rect':
+            rect.render(layer, ctx);
+            break;
+          case 'line':
+            line.render(layer, ctx);
+            break;
+        }
+      });
+    };
+  }, [props.width, props.height, layers, props.mode]);
 
   return (
-    <canvas className={styles.canvas} ref={canvasRef}></canvas>
+    <canvas
+      className={styles.canvas}
+      ref={canvasNodeRef}
+    />
   );
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { DrawLayer } from '../../store/draw/draw.types';
 import styles from './CurrentLayer.module.css';
@@ -9,39 +9,44 @@ import {
   selectCurrentLayer,
 } from '../../store/draw';
 
-export function CurrentLayer() {
-  const [ctx, setCtx] = useState(null as CanvasRenderingContext2D | null);
+type CurrentLayerProps = {
+  width: number;
+  height: number;
+};
+
+export function CurrentLayer(props: CurrentLayerProps) {
   const layers = useSelector(selectCurrentLayer) as DrawLayer[];
   const canvasNodeRef = useRef(null as HTMLCanvasElement | null);
-  const canvasRef = useCallback((node: HTMLCanvasElement) => {
-    if (node !== null) {
-      const ctx = node.getContext('2d');
-      setCtx(ctx);
-      const {width, height} = node.getBoundingClientRect();
-      node.width = width;
-      node.height = height;
-    }
-    canvasNodeRef.current = node;
-  }, []);
 
-  if (ctx) {
-    ctx.clearRect(0, 0, canvasNodeRef.current?.width || 0, canvasNodeRef.current?.height || 0);
-    layers.forEach((layer) => {
-      switch(layer.type){
-        case 'circle':
-          circle.render(layer, ctx);
-          break;
-        case 'rect':
-          rect.render(layer, ctx);
-          break;
-        case 'line':
-          line.render(layer, ctx);
-          break;
+  useEffect(() => {
+    const node = canvasNodeRef.current;
+    const ctx = node?.getContext('2d');
+    if (ctx && node) {
+      if (node.width !== props.width || node.height !== props.height) {
+        node.width = props.width;
+        node.height = props.height;
       }
-    });
-  }
+      ctx.clearRect(0, 0, node.width || 0, node.height || 0);
+      layers.forEach((layer) => {
+        switch (layer.type) {
+          case 'circle':
+            circle.render(layer, ctx);
+            break;
+          case 'rect':
+            rect.render(layer, ctx);
+            break;
+          case 'line':
+            line.render(layer, ctx);
+            break;
+        }
+      });
+    };
+  }, [props.width, props.height, layers]);
 
   return (
-    <canvas className={styles.canvas} ref={canvasRef}></canvas>
+    <canvas
+      className={styles.canvas}
+      ref={canvasNodeRef}
+    />
   );
 }
