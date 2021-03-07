@@ -1,0 +1,7 @@
+.board {
+  display: flexbox;
+  flex-direction: row;
+  justify-content: flex-start;
+  position: relative;
+  height: 600px;
+}

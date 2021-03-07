@@ -1,0 +1,14 @@
+.bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 60px;
+  background-color: silver;
+  padding: 0 20px;
+}
+
+.sel {
+  background-color: slategray;
+  color: white;
+}

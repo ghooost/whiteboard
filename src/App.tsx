@@ -1,11 +1,13 @@
 import React from 'react';
-import { Canvas } from './features/canvas';
 import './App.css';
+import { DrawBoard } from './features/DrawBoard';
+import { ToolBar } from './features/ToolBar';
 
 function App() {
   return (
     <div className="App">
-      <Canvas></Canvas>
+      <DrawBoard></DrawBoard>
+      <ToolBar></ToolBar>
     </div>
   );
 }
