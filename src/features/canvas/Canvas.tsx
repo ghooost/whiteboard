@@ -1,44 +1,92 @@
-import React, { useCallback, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import {
-  selectCanvas,
+  addLevel,
+  updateLevel,
+  selectLayers,
 } from './Canvas.store';
 import styles from './Canvas.module.css';
-import { CanvasLayer, ICanvasLayerCircle, ICanvasLayerRect } from './Canvas.types';
+import { CanvasLayer, ICanvasLayerCircle, ICanvasLayerLine, ICanvasLayerRect, ICanvasShapeStyles } from './Canvas.types';
+
+function colorShape(ctx: CanvasRenderingContext2D, settings: ICanvasShapeStyles) {
+  if (settings.fillStyle) {
+    ctx.fillStyle = settings.fillStyle;
+    ctx.fill();
+  }
+  if (settings.strokeStyle && settings.lineWidth) {
+    ctx.strokeStyle = settings.strokeStyle;
+    ctx.lineWidth = settings.lineWidth;
+    ctx.stroke();
+  }
+}
 
 const renderers = {
-  circle (ctx: CanvasRenderingContext2D, _layer: CanvasLayer) {
+  circle(ctx: CanvasRenderingContext2D, _layer: CanvasLayer) {
     const layer = _layer as ICanvasLayerCircle;
     ctx.beginPath();
-    ctx.lineWidth = layer.lineWidth;
-    ctx.strokeStyle = layer.strokeStyle;
     ctx.arc(
-      layer.base[0] + layer.center[0],
-      layer.base[1] + layer.center[1],
+      layer.bounding.x + layer.center.x,
+      layer.bounding.y + layer.center.y,
       layer.radius,
       0,
       2 * Math.PI,
     );
-    ctx.stroke();
+    colorShape(ctx, layer);
   },
   rect(ctx: CanvasRenderingContext2D, _layer: CanvasLayer) {
     const layer = _layer as ICanvasLayerRect;
     ctx.beginPath();
+    ctx.rect(
+      layer.bounding.x + layer.x,
+      layer.bounding.y + layer.y,
+      layer.bounding.x + layer.w,
+      layer.bounding.y + layer.h,
+    );
+    colorShape(ctx, layer);
+  },
+  line(ctx: CanvasRenderingContext2D, _layer: CanvasLayer) {
+    const layer = _layer as ICanvasLayerLine;
+    ctx.beginPath();
     ctx.lineWidth = layer.lineWidth;
     ctx.strokeStyle = layer.strokeStyle;
-    ctx.rect(
-      layer.base[0] + layer.from[0],
-      layer.base[1] + layer.from[1],
-      layer.base[0] + layer.to[0],
-      layer.base[1] + layer.to[1],
-    );
-    ctx.stroke();
+    layer.points.forEach((point, index) => {
+      if (index) {
+        ctx.lineTo(point.x, point.y);
+      } else {
+        ctx.moveTo(point.x, point.y);
+      };
+    });
+    if (layer.strokeStyle && layer.lineWidth) {
+      ctx.strokeStyle = layer.strokeStyle;
+      ctx.lineWidth = layer.lineWidth;
+      ctx.stroke();
+    }
   },
 }
 
 export function Canvas() {
+  const dispatch = useDispatch();
   const [ctx, setCtx] = useState(null as CanvasRenderingContext2D | null);
-  const layers = useSelector(selectCanvas);
+  const layers = useSelector(selectLayers);
+  const canvasNodeRef = useRef(null as HTMLCanvasElement | null);
+  const drawModeRef = useRef(false);
+  const mouseFuncRef = useRef((e: MouseEvent) => {
+    const {offsetX: x, offsetY: y} = e;
+    switch (e.type) {
+      case 'mouseup':
+        drawModeRef.current = false;
+        break;
+      case 'mousedown':
+        drawModeRef.current = true;
+        dispatch(addLevel({x, y}));
+        break;
+      case 'mousemove':
+        if (drawModeRef.current) {
+          dispatch(updateLevel({x, y}));
+        }
+        break;
+    }
+  });
   const canvasRef = useCallback((node: HTMLCanvasElement) => {
     if (node !== null) {
       const ctx = node.getContext('2d');
@@ -47,8 +95,27 @@ export function Canvas() {
       node.width = width;
       node.height = height;
     }
+    canvasNodeRef.current = node;
   }, []);
+
+  useEffect(() => {
+    if (canvasNodeRef.current) {
+      canvasNodeRef.current.addEventListener('mousedown', mouseFuncRef.current);
+      canvasNodeRef.current.addEventListener('mouseup', mouseFuncRef.current);
+      canvasNodeRef.current.addEventListener('mousemove', mouseFuncRef.current);
+    }
+    return () => {
+      if (canvasNodeRef.current) {
+        canvasNodeRef.current.removeEventListener('mousedown', mouseFuncRef.current);
+        canvasNodeRef.current.removeEventListener('mouseup', mouseFuncRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        canvasNodeRef.current.removeEventListener('mousemove', mouseFuncRef.current);
+      }
+    }
+  }, [canvasRef]);
+
   if (ctx) {
+    ctx.clearRect(0, 0, canvasNodeRef.current?.width || 0, canvasNodeRef.current?.height || 0);
     layers.forEach(
       (layer) =>
         renderers[layer.type] &&
