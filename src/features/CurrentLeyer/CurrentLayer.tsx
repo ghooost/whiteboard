@@ -1,13 +1,13 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { DrawLayer } from '../../app/draw/draw.types';
+import { DrawLayer } from '../../store/draw/draw.types';
 import styles from './CurrentLayer.module.css';
 import * as line from '../../layers/line';
 import * as circle from '../../layers/circle';
 import * as rect from '../../layers/rect';
 import {
   selectCurrentLayer,
-} from '../../app/draw/draw';
+} from '../../store/draw';
 
 export function CurrentLayer() {
   const [ctx, setCtx] = useState(null as CanvasRenderingContext2D | null);

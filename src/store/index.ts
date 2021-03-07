@@ -1,10 +1,8 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import counterReducer from '../features/counter/Counter.store';
-import drawReducer from './draw/draw';
+import drawReducer from './draw';
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
     draw: drawReducer,
   },
 });

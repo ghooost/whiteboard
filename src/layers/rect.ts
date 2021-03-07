@@ -1,4 +1,4 @@
-import { IDrawLayerRect, IDrawPoint } from "../app/draw/draw.types"
+import { IDrawLayerRect, IDrawPoint } from "../store/draw/draw.types"
 
 export const render = (layer: IDrawLayerRect, ctx: CanvasRenderingContext2D) => {
   if (!layer || !layer.base || !layer.w || !layer.h) {

@@ -1,4 +1,4 @@
-import { IDrawLayerLine, IDrawPoint } from "../app/draw/draw.types"
+import { IDrawLayerLine, IDrawPoint } from "../store/draw/draw.types"
 
 export const render = (layer: IDrawLayerLine, ctx: CanvasRenderingContext2D) => {
   if (!layer || !layer.points || !layer.points.length) {

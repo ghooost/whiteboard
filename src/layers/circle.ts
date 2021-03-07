@@ -1,4 +1,4 @@
-import { IDrawLayerCircle, IDrawPoint } from "../app/draw/draw.types"
+import { IDrawLayerCircle, IDrawPoint } from "../store/draw/draw.types"
 
 export const render = (layer: IDrawLayerCircle, ctx: CanvasRenderingContext2D) => {
   if (!layer || !layer.base || !layer.radius) {

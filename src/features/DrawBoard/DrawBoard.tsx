@@ -6,7 +6,7 @@ import {
   addLevel,
   updateLevel,
   funalizeLevel,
-} from '../../app/draw/draw';
+} from '../../store/draw';
 import { useDispatch } from 'react-redux';
 import { CurrentLayer } from '../CurrentLeyer';
 

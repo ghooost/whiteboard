@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { DrawLayer } from '../../app/draw/draw.types';
+import { DrawLayer } from '../../store/draw/draw.types';
 import styles from './Layers.module.css';
 import * as line from '../../layers/line';
 import * as circle from '../../layers/circle';
@@ -8,7 +8,7 @@ import * as rect from '../../layers/rect';
 import {
   selectBottomLayers,
   selectTopLayers,
-} from '../../app/draw/draw';
+} from '../../store/draw';
 
 export type LayersProps = {
   mode: 'bottom' | 'top';

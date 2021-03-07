@@ -3,9 +3,9 @@ import styles from './ToolBar.module.css';
 import {
   selectLayerType,
   setLayerType,
-} from '../../app/draw/draw';
+} from '../../store/draw';
 import { useDispatch, useSelector } from 'react-redux';
-import { LayerType } from '../../app/draw/draw.types';
+import { LayerType } from '../../store/draw/draw.types';
 
 interface ILayerTypeButtonRecord {
   id: LayerType;
