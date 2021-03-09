@@ -28,13 +28,14 @@ export const change = (layer: IDrawLayerRect, point: IDrawPoint) => {
 }
 
 export const create = (
+  id: string,
   point: IDrawPoint,
   lineWidth: number,
   strokeStyle: string,
   fillStyle: string) => {
   const { x, y } = point;
   return {
-    id: '',
+    id,
     type: 'rect',
     x: 0,
     y: 0,

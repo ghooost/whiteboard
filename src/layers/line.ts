@@ -30,13 +30,14 @@ export const change = (layer: IDrawLayerLine, point: IDrawPoint) => {
 }
 
 export const create = (
+  id: string,
   point: IDrawPoint,
   lineWidth: number,
   strokeStyle: string,
 ) => {
     const {x, y} = point;
     return {
-      id: '',
+      id,
       type: 'line',
       points: [{x: 0, y: 0}],
       base: {x, y},

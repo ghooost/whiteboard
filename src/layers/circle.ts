@@ -22,6 +22,7 @@ export const change = (layer: IDrawLayerCircle, point: IDrawPoint) => {
 }
 
 export const create = (
+  id: string,
   point: IDrawPoint,
   lineWidth: number,
   strokeStyle: string,
@@ -29,7 +30,7 @@ export const create = (
 ) => {
   const { x, y } = point;
   const layer: IDrawLayerCircle = {
-    id: '',
+    id,
     type: 'circle',
     radius: 0,
     base: { x, y },

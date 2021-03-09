@@ -1,12 +1,12 @@
 import React from 'react';
 import './App.css';
-import { DrawBoard } from './features/DrawBoard';
+import { DrawRenderer } from './features/DrawRenderer';
 import { ToolBar } from './features/ToolBar';
 
 function App() {
   return (
     <div className="App">
-      <DrawBoard></DrawBoard>
+      <DrawRenderer/>
       <ToolBar></ToolBar>
     </div>
   );

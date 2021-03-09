@@ -6,43 +6,25 @@ import * as circle from '../../layers/circle';
 import * as rect from '../../layers/rect';
 
 interface IDrawState {
+  layerCounter: number;
   layerType: LayerType;
   lineWidth: number;
   strokeStyle: string;
   fillStyle: string;
   layers: DrawLayer[];
-  layerCurrentIndex: number;
-  layersBottom: DrawLayer[];
-  layersTop: DrawLayer[];
-  layersCurrent: DrawLayer[];
+  currentLayerIndex: number;
+  currentLayer: DrawLayer | null;
 }
-
-const defCircle1 = circle.create(
-  { x: 20, y: 20 },
-  2,
-  'red',
-  '',
-) as IDrawLayerCircle;
-defCircle1.radius = 10;
-
-const defCircle2 = circle.create(
-  { x: 20, y: 20 },
-  2,
-  'green',
-  '',
-) as IDrawLayerCircle;
-defCircle2.radius = 20;
 
 const initialState: IDrawState = {
   layerType: 'circle',
   fillStyle: 'rgba(0,0,0,0)',
   lineWidth: 2,
   strokeStyle: 'rgb(0,0,0)',
-  layers: [defCircle1, defCircle2],
-  layerCurrentIndex: 0,
-  layersBottom: [defCircle1, defCircle2],
-  layersCurrent: [],
-  layersTop: [],
+  layers: [],
+  currentLayerIndex: 0,
+  currentLayer: null,
+  layerCounter: 0,
 };
 
 
@@ -52,13 +34,15 @@ export const drawSlice = createSlice({
   reducers: {
     clear: state => {
       state.layers = [];
-      state.layerCurrentIndex = 0;
+      state.currentLayerIndex = 0;
     },
     addLevel: (state, action: PayloadAction<IDrawPoint>) => {
       let newLayer: DrawLayer | null = null;
+      const id = `l${state.layerCounter++}`;
       switch(state.layerType) {
         case 'line':
           newLayer = line.create(
+            id,
             action.payload,
             state.lineWidth,
             state.strokeStyle,
@@ -66,6 +50,7 @@ export const drawSlice = createSlice({
           break;
         case 'circle':
           newLayer = circle.create(
+              id,
               action.payload,
               state.lineWidth,
               state.strokeStyle,
@@ -74,6 +59,7 @@ export const drawSlice = createSlice({
           break;
         case 'rect':
           newLayer = rect.create(
+              id,
               action.payload,
               state.lineWidth,
               state.strokeStyle,
@@ -82,15 +68,15 @@ export const drawSlice = createSlice({
           break;
       }
       if (newLayer) {
-        state.layerCurrentIndex = state.layers.length;
-        state.layers.push(newLayer);
-        state.layersCurrent = [newLayer];
-        state.layersBottom = state.layers.slice(0);
-        state.layersTop = [];
+        state.currentLayerIndex = state.layers.length;
+        state.currentLayer = newLayer;
       }
     },
     updateLevel: (state, action: PayloadAction<IDrawPoint>) => {
-      const layer = state.layersCurrent[0];
+      if (!state.currentLayer) {
+        return;
+      }
+      const layer = state.currentLayer;
       switch (layer.type) {
         case 'line':
           line.change(layer, action.payload);
@@ -103,8 +89,18 @@ export const drawSlice = createSlice({
           break;
       }
     },
-    funalizeLevel: (state) => {
-      state.layers[state.layerCurrentIndex] = state.layersCurrent[0];
+    finalizeLevel: (state) => {
+      if (!state.currentLayer) {
+        return;
+      }
+      if (state.currentLayerIndex >= state.layers.length) {
+        state.layers.push(state.currentLayer);
+        state.currentLayer = null;
+        state.currentLayerIndex = state.layers.length;
+      } else {
+        state.layers[state.currentLayerIndex] = state.currentLayer;
+        state.currentLayer = null;
+      }
     },
     setLayerType: (state, action: PayloadAction<LayerType>) => {
       state.layerType = action.payload;
@@ -115,18 +111,18 @@ export const drawSlice = createSlice({
 export const {
   addLevel,
   updateLevel,
-  funalizeLevel,
+  finalizeLevel,
   setLayerType,
 } = drawSlice.actions;
 
+export const selectLayers = (state: RootState) =>
+  state.draw.layers;
+
 export const selectCurrentLayer = (state: RootState) =>
-  state.draw.layersCurrent;
+  state.draw.currentLayer;
 
-export const selectTopLayers = (state: RootState) =>
-  state.draw.layersTop;
-
-export const selectBottomLayers = (state: RootState) =>
-  state.draw.layersBottom;
+export const selectCurrentLayerIndex = (state: RootState) =>
+  state.draw.currentLayerIndex;
 
 export const selectLayerType = (state: RootState) =>
   state.draw.layerType;
