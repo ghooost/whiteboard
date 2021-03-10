@@ -46,6 +46,41 @@ function reDrawLayers(
   });
 };
 
+type CurrentLevelState = {
+  id: string;
+  stage: number;
+}
+
+function reDrawCurrentLayers(
+  ctx: CanvasRenderingContext2D | null,
+  layer: DrawLayer | null,
+  size: number[],
+  lastCurrentLayer: React.MutableRefObject<CurrentLevelState>,
+) {
+  if (!ctx) {
+    return;
+  }
+  if (layer?.type === 'line') {
+    if (layer.id !== lastCurrentLayer.current.id) {
+      lastCurrentLayer.current.id = layer.id;
+      lastCurrentLayer.current.stage = 0;
+      ctx.clearRect(0, 0, size[0], size[1]);
+    }
+    line.render(layer, ctx, lastCurrentLayer.current.stage);
+    lastCurrentLayer.current.stage = layer.points.length - 1;
+  } else {
+    ctx.clearRect(0, 0, size[0], size[1]);
+    switch (layer?.type) {
+      case 'circle':
+        circle.render(layer, ctx);
+        break;
+      case 'rect':
+        rect.render(layer, ctx);
+        break;
+    }
+  }
+};
+
 
 export function DrawRenderer() {
   const dispatch = useDispatch();
@@ -95,12 +130,16 @@ export function DrawRenderer() {
     ctxTop,
     size,
   ]);
-
+  const lastCurrentLayer = useRef({
+    id: '',
+    stage: 0,
+  } as CurrentLevelState);
   useEffect(() => {
-    reDrawLayers(
+    reDrawCurrentLayers(
       ctxCurrent,
-      [currentLayer],
+      currentLayer,
       size,
+      lastCurrentLayer,
     );
   }, [
     currentLayerIndex,
