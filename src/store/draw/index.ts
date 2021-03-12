@@ -1,9 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '..';
-import { DrawLayer, IDrawLayerCircle, IDrawLayerLine, IDrawLayerRect, IDrawPoint, LayerType } from './draw.types';
-import * as line from '../../layers/line';
-import * as circle from '../../layers/circle';
-import * as rect from '../../layers/rect';
+import { DrawLayer, IDrawPoint, LayerType } from './draw.types';
+import { getRenderer } from '../../layers';
 
 interface IDrawState {
   layerCounter: number;
@@ -37,39 +35,17 @@ export const drawSlice = createSlice({
       state.currentLayerIndex = 0;
     },
     addLevel: (state, action: PayloadAction<IDrawPoint>) => {
-      let newLayer: DrawLayer | null = null;
       const id = `l${state.layerCounter++}`;
-      switch(state.layerType) {
-        case 'line':
-          newLayer = line.create(
-            id,
-            action.payload,
-            state.lineWidth,
-            state.strokeStyle,
-          ) as IDrawLayerLine;
-          break;
-        case 'circle':
-          newLayer = circle.create(
-              id,
-              action.payload,
-              state.lineWidth,
-              state.strokeStyle,
-              state.fillStyle,
-            ) as IDrawLayerCircle;
-          break;
-        case 'rect':
-          newLayer = rect.create(
-              id,
-              action.payload,
-              state.lineWidth,
-              state.strokeStyle,
-              state.fillStyle,
-            ) as IDrawLayerRect;
-          break;
-      }
+      const newLayer = getRenderer(state.layerType).create(
+        id,
+        action.payload,
+        state.lineWidth,
+        state.strokeStyle,
+        state.fillStyle,
+      );
       if (newLayer) {
         state.currentLayerIndex = state.layers.length;
-        state.currentLayer = newLayer;
+        state.currentLayer = newLayer as any;
       }
     },
     updateLevel: (state, action: PayloadAction<IDrawPoint>) => {
@@ -77,17 +53,7 @@ export const drawSlice = createSlice({
         return;
       }
       const layer = state.currentLayer;
-      switch (layer.type) {
-        case 'line':
-          line.change(layer, action.payload);
-          break;
-        case 'circle':
-          circle.change(layer, action.payload);
-          break;
-        case 'rect':
-          rect.change(layer, action.payload);
-          break;
-      }
+      getRenderer(layer.type).change(layer as any, action.payload);
     },
     finalizeLevel: (state) => {
       if (!state.currentLayer) {

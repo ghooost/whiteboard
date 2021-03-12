@@ -24,7 +24,7 @@ export interface IDrawShapeStyle extends IDrawStrokeStyle {
 interface IDrawLayerBase {
   id: string;
   type: LayerType;
-  // bounding: IDrawRect;
+  bounds: [IDrawRect, IDrawRect];
   base: IDrawPoint;
 }
 

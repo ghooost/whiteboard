@@ -11,13 +11,26 @@ import {
 
 } from '../../store/draw';
 import { useDispatch, useSelector } from 'react-redux';
-import * as line from '../../layers/line';
-import * as circle from '../../layers/circle';
-import * as rect from '../../layers/rect';
 import { DrawLayer } from '../../store/draw/draw.types';
 import useResize from '../../hooks/resize';
 import useCanvasDrawContext from '../../hooks/canvasDrawContext';
 import useMouse, { UseMouseOptions } from '../../hooks/mouse';
+import { getRenderer } from '../../layers';
+
+// type CacheItem = {
+//   id: string;
+//   img: ImageData;
+// }
+
+// const layersCache: {
+//   [key: string]: CacheItem;
+// }
+
+// function renderViaCache(ctx: CanvasRenderingContext2D, id: string, ) {
+//   if (layersCache[id]) {
+//     return lay
+//   }
+// }
 
 function reDrawLayers(
   ctx: CanvasRenderingContext2D | null,
@@ -32,17 +45,7 @@ function reDrawLayers(
     if (!layer) {
       return;
     }
-    switch (layer.type) {
-      case 'circle':
-        circle.render(layer, ctx);
-        break;
-      case 'rect':
-        rect.render(layer, ctx);
-        break;
-      case 'line':
-        line.render(layer, ctx);
-        break;
-    }
+    getRenderer(layer.type).render(layer as any, ctx);
   });
 };
 
@@ -51,36 +54,22 @@ type CurrentLevelState = {
   stage: number;
 }
 
-function reDrawCurrentLayers(
+function reDrawCurrentLayer(
   ctx: CanvasRenderingContext2D | null,
   layer: DrawLayer | null,
   size: number[],
-  lastCurrentLayer: React.MutableRefObject<CurrentLevelState>,
+  currentLevelState: React.MutableRefObject<CurrentLevelState>,
 ) {
-  if (!ctx) {
+  if (!ctx || !layer) {
     return;
   }
-  if (layer?.type === 'line') {
-    if (layer.id !== lastCurrentLayer.current.id) {
-      lastCurrentLayer.current.id = layer.id;
-      lastCurrentLayer.current.stage = 0;
-      ctx.clearRect(0, 0, size[0], size[1]);
-    }
-    line.render(layer, ctx, lastCurrentLayer.current.stage);
-    lastCurrentLayer.current.stage = layer.points.length - 1;
-  } else {
+  if (layer.id !== currentLevelState.current.id) {
+    currentLevelState.current.id = layer.id;
+    currentLevelState.current.stage = 0;
     ctx.clearRect(0, 0, size[0], size[1]);
-    switch (layer?.type) {
-      case 'circle':
-        circle.render(layer, ctx);
-        break;
-      case 'rect':
-        rect.render(layer, ctx);
-        break;
-    }
   }
+  currentLevelState.current.stage = getRenderer(layer.type).postUpdateCurrent(layer as any, ctx, currentLevelState.current.stage);
 };
-
 
 export function DrawRenderer() {
   const dispatch = useDispatch();
@@ -89,19 +78,6 @@ export function DrawRenderer() {
   const backgroundRef = useRef(null as HTMLCanvasElement | null);
   const currentRef = useRef(null as HTMLCanvasElement | null);
   const foregroundRef = useRef(null as HTMLCanvasElement | null);
-  const mouseOptions = useRef<UseMouseOptions>({
-    onMouseDown (x, y) {
-      dispatch(addLevel({ x, y }));
-    },
-    onMouseMove (x, y) {
-      dispatch(updateLevel({ x, y }));
-    },
-    onMouseUp (x, y) {
-      dispatch(finalizeLevel());
-    }
-  });
-
-  useMouse(boardRef, mouseOptions.current);
   const size = useResize(boardRef);
 
   const currentLayerIndex = useSelector(selectCurrentLayerIndex);
@@ -130,12 +106,28 @@ export function DrawRenderer() {
     ctxTop,
     size,
   ]);
+
+  const mouseOptions = useRef<UseMouseOptions>({
+    onMouseDown(x, y) {
+      dispatch(addLevel({ x, y }));
+    },
+    onMouseMove(x, y) {
+      dispatch(updateLevel({ x, y }));
+    },
+    onMouseUp(x, y) {
+      dispatch(finalizeLevel());
+    }
+  });
+
+  useMouse(boardRef, mouseOptions.current);
+
   const lastCurrentLayer = useRef({
     id: '',
     stage: 0,
   } as CurrentLevelState);
+
   useEffect(() => {
-    reDrawCurrentLayers(
+    reDrawCurrentLayer(
       ctxCurrent,
       currentLayer,
       size,
