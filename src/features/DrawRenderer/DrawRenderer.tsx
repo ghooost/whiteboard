@@ -17,21 +17,6 @@ import useCanvasDrawContext from '../../hooks/canvasDrawContext';
 import useMouse, { UseMouseOptions } from '../../hooks/mouse';
 import { getRenderer } from '../../layers';
 
-// type CacheItem = {
-//   id: string;
-//   img: ImageData;
-// }
-
-// const layersCache: {
-//   [key: string]: CacheItem;
-// }
-
-// function renderViaCache(ctx: CanvasRenderingContext2D, id: string, ) {
-//   if (layersCache[id]) {
-//     return lay
-//   }
-// }
-
 function reDrawLayers(
   ctx: CanvasRenderingContext2D | null,
   layers: (DrawLayer | null)[],
